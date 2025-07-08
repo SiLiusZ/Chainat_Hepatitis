@@ -6,7 +6,7 @@
     <title>ระบบรายงานผลการคัดกรองและรักษาไวรัสตับอักเสบ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
@@ -163,21 +163,28 @@
             color: #333;
         }
 
-        .table-header .view-all-btn {
-            background-color: #007bff;
+        /* Updated .view-all-btn styling */
+        .view-all-btn {
+            background-color: #673AB7; /* A nice purple */
             color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
+            padding: 10px 20px;
+            border-radius: 8px; /* More rounded */
             text-decoration: none;
-            font-size: 0.9em;
+            font-size: 1em; /* Slightly larger font */
+            font-weight: 600; /* Bolder text */
             display: flex;
             align-items: center;
-            gap: 5px;
-            transition: background-color 0.3s ease;
+            gap: 8px; /* More space between icon and text */
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow */
+            border: none; /* Remove default button border */
+            cursor: pointer; /* Indicate it's clickable */
         }
 
-        .table-header .view-all-btn:hover {
-            background-color: #0056b3;
+        .view-all-btn:hover {
+            background-color: #512DA8; /* Darker purple on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
         }
 
         .data-table-container {
@@ -343,9 +350,11 @@
             display: grid;
             grid-template-columns: 80px 1fr; /* 80px for y-axis labels, 1fr for bars */
             align-items: start;
+            position: relative; /* Needed for absolute positioning of target lines */
         }
 
         .y-axis-labels {
+            grid-column: 1 / 2; /* Ensure it stays in the first column */
             display: flex;
             flex-direction: column;
             font-size: 0.85em;
@@ -357,10 +366,12 @@
         }
 
         .chart-bars-container {
+            grid-column: 2 / 3; /* Ensure it stays in the second column */
             display: flex;
             flex-direction: column;
             padding-right: 0px;
             overflow-x: hidden;
+            position: relative; /* Keep this for bar values */
         }
 
         .chart-bar-group {
@@ -451,7 +462,41 @@
         }
         /* --- CHART GRID adjustments END --- */
 
-        /* NEW: Styles for the report table */
+        /* New style for target lines in charts */
+        .chart-target-line {
+            position: absolute;
+            /* top and height will be set by JS dynamically */
+            width: 2px; /* Thin line */
+            border-left: 2px dashed #dc3545; /* Red dashed line */
+            z-index: 5; /* Ensure it's above the bars but below values if needed */
+            pointer-events: none; /* Make sure it doesn't interfere with mouse events */
+            /* grid-column is removed here as it's absolute within grid */
+        }
+
+        .chart-target-line .chart-target-label {
+            position: absolute;
+            top: -25px; /* Position above the line */
+            left: 50%; /* Center the label on the line */
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            color: #dc3545; /* Match line color */
+            white-space: nowrap;
+            z-index: 6;
+            background-color: #f0f2f5; /* Background to make text stand out */
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        /* Specific positioning for each target line */
+        .hbv-target-line {
+            left: 53%; /* 50% mark */
+        }
+
+        .hcv-target-line {
+            left: 81%; /* 80% mark */
+        }
+
+        /* Styles for the report table */
         .report-table-container {
             background-color: white; /* Inherit card-like style */
             border-radius: 8px;
@@ -461,10 +506,16 @@
             padding: 30px; /* Adjust padding for the new table container */
         }
 
-        .report-table-container h2 {
-            text-align: center;
-            color: #007bff;
+        .report-table-header-flex { /* New flex container for title and button */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 25px;
+        }
+
+        .report-table-container h2 {
+            margin: 0; /* Reset margin as it's now in a flex container */
+            color: #007bff;
             font-size: 1.6em;
         }
 
@@ -497,6 +548,96 @@
 
         #reportTable tbody tr:hover {
             background-color: #f1f1f1;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            max-height: 90vh; /* Limit height for scrollability */
+            overflow-y: auto; /* Enable scrolling for modal content */
+            position: relative;
+            transform: translateY(-20px); /* Initial slight offset */
+            transition: transform 0.3s ease;
+            width: 1000px; /* Adjust max width for the table */
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.4em;
+            color: #333;
+        }
+
+        .modal-close-button {
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            color: #666;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close-button:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            /* Contains the table for all reports */
+        }
+
+        .modal-body .data-table { /* Reuse existing table styles */
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            margin-top: 0; /* Reset margin-top */
+        }
+
+        .modal-body .data-table th, .modal-body .data-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            white-space: nowrap;
+        }
+
+        .modal-body .data-table th {
+            background-color: #f8f9fa;
+            color: #555;
         }
 
         /* Responsive table */
@@ -533,38 +674,52 @@
                 align-items: flex-start;
                 gap: 10px;
             }
+            
+            /* --- Responsive Chart Adjustments for Small Screens --- */
             .chart-grid {
-                grid-template-columns: 1fr; /* Stack labels and bars on small screens */
+                grid-template-columns: 60px 1fr; /* Smaller column for y-axis labels */
             }
             .y-axis-labels {
-                display: none; /* Hide y-axis labels if too cramped */
+                display: flex; /* Ensure y-axis labels are visible */
+                font-size: 0.7em; /* Smaller font size */
+                padding-right: 5px;
             }
             .chart-bars-container {
-                padding-right: 0;
+                overflow-x: auto; /* Allow horizontal scrolling for bars */
+                padding-right: 0; /* Reset padding */
+            }
+            .chart-bar-group {
+                min-width: 250px; /* Ensure bar groups have a minimum width to prevent collapse */
+                /* This will make the chart-bars-container scroll horizontally if content exceeds */
             }
             .x-axis-labels {
+                grid-column: 2 / 3; /* Keep x-axis labels aligned with bars */
+                width: max-content; /* Allow x-axis labels to expand with scrolled content */
                 padding-left: 0;
             }
+            /* --- End Responsive Chart Adjustments --- */
+
 
             /* Responsive table specific styles for small screens */
-            #reportTable, #reportTable thead, #reportTable tbody, #reportTable th, #reportTable td, #reportTable tr {
+            #reportTable, #reportTable thead, #reportTable tbody, #reportTable th, #reportTable td, #reportTable tr,
+            #allReportsTable, #allReportsTable thead, #allReportsTable tbody, #allReportsTable th, #allReportsTable td, #allReportsTable tr {
                 display: block;
             }
 
-            #reportTable thead tr {
+            #reportTable thead tr, #allReportsTable thead tr {
                 position: absolute;
                 top: -9999px;
                 left: -9999px;
             }
 
-            #reportTable tr {
+            #reportTable tr, #allReportsTable tr {
                 border: 1px solid #ccc;
                 margin-bottom: 10px;
                 border-radius: 5px;
                 overflow: hidden; /* For rounded corners on rows */
             }
 
-            #reportTable td {
+            #reportTable td, #allReportsTable td {
                 border: none;
                 border-bottom: 1px solid #eee;
                 position: relative;
@@ -573,11 +728,11 @@
                 word-wrap: break-word; /* Allow long text to wrap */
             }
 
-            #reportTable td:last-child {
+            #reportTable td:last-child, #allReportsTable td:last-child {
                 border-bottom: 0;
             }
 
-            #reportTable td:before {
+            #reportTable td:before, #allReportsTable td:before {
                 content: attr(data-label);
                 position: absolute;
                 left: 10px;
@@ -589,6 +744,11 @@
                 color: #333;
                 overflow: hidden; /* Hide overflow for label */
                 text-overflow: ellipsis; /* Add ellipsis for long labels */
+            }
+
+            .modal-content {
+                padding: 15px;
+                max-height: 95vh;
             }
         }
     </style>
@@ -724,19 +884,23 @@
             </div>
             <div class="chart-bars-container" id="hbvChartBars">
             </div>
-        </div>
-        <div class="x-axis-labels">
-            <span class="x-axis-label" style="left: 0%;">0</span>
-            <span class="x-axis-label" style="left: 10%;">10</span>
-            <span class="x-axis-label" style="left: 20%;">20</span>
-            <span class="x-axis-label" style="left: 30%;">30</span>
-            <span class="x-axis-label" style="left: 40%;">40</span>
-            <span class="x-axis-label" style="left: 50%;">50</span>
-            <span class="x-axis-label" style="left: 60%;">60</span>
-            <span class="x-axis-label" style="left: 70%;">70</span>
-            <span class="x-axis-label" style="left: 80%;">80</span>
-            <span class="x-axis-label" style="left: 90%;">90</span>
-            <span class="x-axis-label" style="left: 100%;">100</span>
+            <!-- HBV Target Line - Positioned within chart-grid for proper alignment -->
+            <div class="chart-target-line hbv-target-line" id="hbvTargetLine">
+                <span class="chart-target-label">เป้าหมาย 50%</span>
+            </div>
+            <div class="x-axis-labels">
+                <span class="x-axis-label" style="left: 0%;">0</span>
+                <span class="x-axis-label" style="left: 10%;">10</span>
+                <span class="x-axis-label" style="left: 20%;">20</span>
+                <span class="x-axis-label" style="left: 30%;">30</span>
+                <span class="x-axis-label" style="left: 40%;">40</span>
+                <span class="x-axis-label" style="left: 50%;">50</span>
+                <span class="x-axis-label" style="left: 60%;">60</span>
+                <span class="x-axis-label" style="left: 70%;">70</span>
+                <span class="x-axis-label" style="left: 80%;">80</span>
+                <span class="x-axis-label" style="left: 90%;">90</span>
+                <span class="x-axis-label" style="left: 100%;">100</span>
+            </div>
         </div>
         <div style="text-align: center; font-size: 0.9em; color: #555; margin-top: 10px;">ร้อยละ</div>
     </div>
@@ -758,25 +922,34 @@
             </div>
             <div class="chart-bars-container" id="hcvChartBars">
             </div>
-        </div>
-        <div class="x-axis-labels">
-            <span class="x-axis-label" style="left: 0%;">0</span>
-            <span class="x-axis-label" style="left: 10%;">10</span>
-            <span class="x-axis-label" style="left: 20%;">20</span>
-            <span class="x-axis-label" style="left: 30%;">30</span>
-            <span class="x-axis-label" style="left: 40%;">40</span>
-            <span class="x-axis-label" style="left: 50%;">50</span>
-            <span class="x-axis-label" style="left: 60%;">60</span>
-            <span class="x-axis-label" style="left: 70%;">70</span>
-            <span class="x-axis-label" style="left: 80%;">80</span>
-            <span class="x-axis-label" style="left: 90%;">90</span>
-            <span class="x-axis-label" style="left: 100%;">100</span>
+            <!-- HCV Target Line - Positioned within chart-grid for proper alignment -->
+            <div class="chart-target-line hcv-target-line" id="hcvTargetLine">
+                <span class="chart-target-label">เป้าหมาย 80%</span>
+            </div>
+            <div class="x-axis-labels">
+                <span class="x-axis-label" style="left: 0%;">0</span>
+                <span class="x-axis-label" style="left: 10%;">10</span>
+                <span class="x-axis-label" style="left: 20%;">20</span>
+                <span class="x-axis-label" style="left: 30%;">30</span>
+                <span class="x-axis-label" style="left: 40%;">40</span>
+                <span class="x-axis-label" style="left: 50%;">50</span>
+                <span class="x-axis-label" style="left: 60%;">60</span>
+                <span class="x-axis-label" style="left: 70%;">70</span>
+                <span class="x-axis-label" style="left: 80%;">80</span>
+                <span class="x-axis-label" style="left: 90%;">90</span>
+                <span class="x-axis-label" style="left: 100%;">100</span>
+            </div>
         </div>
         <div style="text-align: center; font-size: 0.9em; color: #555; margin-top: 10px;">ร้อยละ</div>
     </div>
 
     <div class="report-table-container">
-        <h2><i class="fas fa-table"></i> ตารางข้อมูลการรายงาน (ล่าสุด)</h2>
+        <div class="report-table-header-flex">
+            <h2><i class="fas fa-table"></i> ตารางข้อมูลการรายงาน (ล่าสุด)</h2>
+            <button id="viewAllReportsBtn" class="view-all-btn">
+                <i class="fas fa-list"></i> ดูรายงานทั้งหมด
+            </button>
+        </div>
         <div class="data-table-container">
             <table id="reportTable" class="data-table">
                 <thead>
@@ -803,11 +976,48 @@
         <div id="noReportData" style="text-align: center; margin-top: 20px; color: #666; display: none;">ยังไม่มีข้อมูลการรายงานในระบบ</div>
     </div>
 
+    <!-- All Reports Modal -->
+    <div class="modal-overlay" id="allReportsModalOverlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>รายงานทั้งหมด</h3>
+                <button class="modal-close-button" id="closeAllReportsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="data-table-container">
+                    <table id="allReportsTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>วันที่บันทึก</th>
+                                <th>เดือน</th>
+                                <th>อำเภอ</th>
+                                <th>HBV คัดกรอง</th>
+                                <th>HCV คัดกรอง</th>
+                                <th>เป้าหมาย</th>
+                                <th>HBV เป็นบวก</th>
+                                <th>HCV เป็นบวก</th>
+                                <th>HBV ส่งตรวจตับ</th>
+                                <th>HCV Viral Load</th>
+                                <th>HCV Detect</th>
+                                <th>HCV รักษาแล้ว</th>
+                                <th>หน่วยงาน</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- All reports will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noAllReportData" style="text-align: center; margin-top: 20px; color: #666; display: none;">ยังไม่มีข้อมูลรายงานทั้งหมดในระบบ</div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-        import { getFirestore, collection, query, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -844,13 +1054,20 @@
         ];
 
         // Global object to store latest report data for each district and targets
-        let allReportsData = {};
+        let allReportsData = {}; // Stores latest report per district for dashboard
         let allTargetsData = {};
+
+        // Get modal elements
+        const allReportsModalOverlay = document.getElementById('allReportsModalOverlay');
+        const closeAllReportsModalBtn = document.getElementById('closeAllReportsModal');
+        const viewAllReportsBtn = document.getElementById('viewAllReportsBtn');
+        const allReportsTableBody = document.querySelector('#allReportsTable tbody');
+        const noAllReportDataMessage = document.getElementById('noAllReportData');
 
         // Function to fetch and listen to real-time updates for reports
         function listenForReports() {
             const reportsColRef = collection(db, 'reports');
-            const q = query(reportsColRef); // No ordering here, we'll sort in JS
+            const q = query(reportsColRef); 
 
             onSnapshot(q, (snapshot) => {
                 const tempReports = {};
@@ -894,7 +1111,7 @@
             renderSummaryTable();
             renderHbvChart();
             renderHcvChart();
-            renderReportTable();
+            renderReportTable(); // This now renders only the latest reports per district
         }
 
         function loadDashboardData() {
@@ -984,6 +1201,7 @@
         function renderHbvChart() {
             const yAxisLabelsContainer = document.getElementById('hbvYAxisLabels');
             const chartBarsContainer = document.getElementById('hbvChartBars');
+            const hbvTargetLine = document.getElementById('hbvTargetLine'); // Get the target line element
 
             yAxisLabelsContainer.innerHTML = '';
             chartBarsContainer.innerHTML = '';
@@ -994,7 +1212,10 @@
             if (districtsToChart.length === 0) {
                 yAxisLabelsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;">ไม่มีข้อมูลกราฟ</div>';
                 chartBarsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;"></div>';
+                hbvTargetLine.style.display = 'none'; // Hide target line if no data
                 return;
+            } else {
+                hbvTargetLine.style.display = 'block'; // Show target line if data exists
             }
 
             districtsToChart.forEach(districtName => {
@@ -1042,11 +1263,23 @@
                     label.style.alignItems = 'center'; // Vertically center the text
                 });
             }
+
+            // Dynamically set height and top position for the HBV target line
+            // This must be done AFTER all bars are rendered and the container has its final height
+            if (hbvTargetLine) {
+                const chartGridElement = hbvTargetLine.parentElement;
+                const chartBarsContainerRect = chartBarsContainer.getBoundingClientRect();
+                const chartGridRect = chartGridElement.getBoundingClientRect();
+
+                hbvTargetLine.style.height = `${chartBarsContainerRect.height}px`;
+                hbvTargetLine.style.top = `${chartBarsContainerRect.top - chartGridRect.top}px`;
+            }
         }
 
         function renderHcvChart() {
             const yAxisLabelsContainer = document.getElementById('hcvYAxisLabels');
             const chartBarsContainer = document.getElementById('hcvChartBars');
+            const hcvTargetLine = document.getElementById('hcvTargetLine'); // Get the target line element
 
             yAxisLabelsContainer.innerHTML = '';
             chartBarsContainer.innerHTML = '';
@@ -1057,7 +1290,10 @@
             if (districtsToChart.length === 0) {
                 yAxisLabelsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;">ไม่มีข้อมูลกราฟ</div>';
                 chartBarsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;"></div>';
+                hcvTargetLine.style.display = 'none'; // Hide target line if no data
                 return;
+            } else {
+                hcvTargetLine.style.display = 'block'; // Show target line if data exists
             }
 
             districtsToChart.forEach(districtName => {
@@ -1105,9 +1341,20 @@
                     label.style.alignItems = 'center';
                 });
             }
+
+            // Dynamically set height and top position for the HCV target line
+            // This must be done AFTER all bars are rendered and the container has its final height
+            if (hcvTargetLine) {
+                const chartGridElement = hcvTargetLine.parentElement;
+                const chartBarsContainerRect = chartBarsContainer.getBoundingClientRect();
+                const chartGridRect = chartGridElement.getBoundingClientRect();
+                
+                hcvTargetLine.style.height = `${chartBarsContainerRect.height}px`;
+                hcvTargetLine.style.top = `${chartBarsContainerRect.top - chartGridRect.top}px`;
+            }
         }
 
-        // --- NEW FUNCTION: renderReportTable ---
+        // --- Renders only the latest report per district for the main table ---
         function renderReportTable() {
             const reportTableBody = document.querySelector('#reportTable tbody');
             const noReportDataMessage = document.getElementById('noReportData');
@@ -1156,6 +1403,89 @@
                 reportTableBody.appendChild(row);
             });
         }
+
+        // --- NEW FUNCTION: showAllReportsModal ---
+        async function showAllReportsModal() {
+            allReportsTableBody.innerHTML = ''; // Clear previous data
+            noAllReportDataMessage.style.display = 'none'; // Hide no data message initially
+
+            allReportsModalOverlay.classList.add('active'); // Show modal
+
+            try {
+                const reportsColRef = collection(db, 'reports');
+                // Get all documents, ordered by timestamp newest first
+                const q = query(reportsColRef); 
+                const querySnapshot = await getDocs(q);
+
+                const allReports = [];
+                querySnapshot.forEach(doc => {
+                    allReports.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort all reports by timestamp (newest first) in JavaScript
+                allReports.sort((a, b) => {
+                    const dateA = a.timestamp ? new Date(a.timestamp) : new Date(0);
+                    const dateB = b.timestamp ? new Date(b.timestamp) : new Date(0);
+                    return dateB.getTime() - dateA.getTime(); // Newest first
+                });
+
+                if (allReports.length === 0) {
+                    noAllReportDataMessage.style.display = 'block';
+                    return;
+                }
+
+                allReports.forEach(data => {
+                    const row = document.createElement('tr');
+                    
+                    // Recalculate percentages if not present or for consistency
+                    const hbvPositive = parseFloat(data.hbvPositive || 0);
+                    const hcvPositive = parseFloat(data.hcvPositive || 0);
+                    const hcvViralLoadTest = parseFloat(data.hcvViralLoadTest || 0);
+
+                    let percentageHbvLiverAssessment = (hbvPositive > 0) ? ((parseFloat(data.hbvLiverAssessment || 0) / hbvPositive) * 100) : 0;
+                    if (percentageHbvLiverAssessment > 100) percentageHbvLiverAssessment = 100;
+
+                    let percentageHcvViralLoadTest = (hcvPositive > 0) ? ((parseFloat(data.hcvViralLoadTest || 0) / hcvPositive) * 100) : 0;
+                    if (percentageHcvViralLoadTest > 100) percentageHcvViralLoadTest = 100;
+
+                    let percentageHcvTreated = (hcvViralLoadTest > 0) ? ((parseFloat(data.hcvTreated || 0) / hcvViralLoadTest) * 100) : 0;
+                    if (percentageHcvTreated > 100) percentageHcvTreated = 100;
+
+                    row.innerHTML = `
+                        <td data-label="วันที่บันทึก">${data.reportDate || ''}</td>
+                        <td data-label="เดือน">${thaiMonths[(parseInt(data.reportMonth) || 1) - 1] || ''}</td>
+                        <td data-label="อำเภอ">${data.district || ''}</td>
+                        <td data-label="HBV คัดกรอง">${(parseFloat(data.hbvScreening || 0)).toLocaleString()}</td>
+                        <td data-label="HCV คัดกรอง">${(parseFloat(data.hcvScreening || 0)).toLocaleString()}</td>
+                        <td data-label="เป้าหมาย">${(parseFloat(data.screeningTarget || 0)).toLocaleString()}</td>
+                        <td data-label="HBV เป็นบวก">${(parseFloat(data.hbvPositive || 0)).toLocaleString()}</td>
+                        <td data-label="HCV เป็นบวก">${(parseFloat(data.hcvPositive || 0)).toLocaleString()}</td>
+                        <td data-label="HBV ส่งตรวจตับ">${(parseFloat(data.hbvLiverAssessment || 0)).toLocaleString()} (${percentageHbvLiverAssessment.toFixed(2)}%)</td>
+                        <td data-label="HCV Viral Load">${(parseFloat(data.hcvViralLoadTest || 0)).toLocaleString()} (${percentageHcvViralLoadTest.toFixed(2)}%)</td>
+                        <td data-label="HCV Detect">${(parseFloat(data.hcvDetect || 0)).toLocaleString()}</td>
+                        <td data-label="HCV รักษาแล้ว">${(parseFloat(data.hcvTreated || 0)).toLocaleString()} (${percentageHcvTreated.toFixed(2)}%)</td>
+                        <td data-label="หน่วยงาน">${data.reportingUnit || ''}</td>
+                    `;
+                    allReportsTableBody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error("Error fetching all reports:", error);
+                noAllReportDataMessage.textContent = `เกิดข้อผิดพลาดในการดึงข้อมูลรายงานทั้งหมด: ${error.message}`;
+                noAllReportDataMessage.style.display = 'block';
+            }
+        }
+
+        // Event Listeners for Modal
+        viewAllReportsBtn.addEventListener('click', showAllReportsModal);
+        closeAllReportsModalBtn.addEventListener('click', () => {
+            allReportsModalOverlay.classList.remove('active');
+        });
+        allReportsModalOverlay.addEventListener('click', (event) => {
+            if (event.target === allReportsModalOverlay) {
+                allReportsModalOverlay.classList.remove('active');
+            }
+        });
 
         // Initial data load and real-time listeners
         document.addEventListener('DOMContentLoaded', function() {
