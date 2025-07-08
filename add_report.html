@@ -91,10 +91,6 @@
             box-sizing: border-box; /* Include padding in width calculation */
         }
 
-        .form-group input[type="date"] {
-            /* Adjust date input icon appearance if needed */
-        }
-
         .form-group select {
             appearance: none; /* Remove default arrow */
             -webkit-appearance: none;
@@ -139,6 +135,54 @@
             background-color: #5a6268;
         }
 
+        /* Message box styling */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+            display: none; /* Hidden by default */
+            max-width: 300px;
+            width: 90%;
+        }
+        .message-box h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .message-box p {
+            margin-bottom: 20px;
+            color: #555;
+        }
+        .message-box button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        .message-box button:hover {
+            background-color: #0056b3;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none; /* Hidden by default */
+        }
+
         @media (max-width: 768px) {
             .navbar {
                 flex-direction: column;
@@ -175,25 +219,25 @@
         <form id="reportForm">
             <div class="form-group">
                 <label for="reportDate">วันที่บันทึก</label>
-                <input type="date" id="reportDate" name="reportDate" value="2025-07-07" required>
+                <input type="date" id="reportDate" name="reportDate" required>
             </div>
 
             <div class="form-group">
                 <label for="reportMonth">เดือนที่รายงาน</label>
                 <select id="reportMonth" name="reportMonth" required>
                     <option value="">เลือกเดือน</option>
-                    <option value="มกราคม">มกราคม</option>
-                    <option value="กุมภาพันธ์">กุมภาพันธ์</option>
-                    <option value="มีนาคม">มีนาคม</option>
-                    <option value="เมษายน">เมษายน</option>
-                    <option value="พฤษภาคม">พฤษภาคม</option>
-                    <option value="มิถุนายน">มิถุนายน</option>
-                    <option value="กรกฎาคม">กรกฎาคม</option>
-                    <option value="สิงหาคม">สิงหาคม</option>
-                    <option value="กันยายน">กันยายน</option>
-                    <option value="ตุลาคม">ตุลาคม</option>
-                    <option value="พฤศจิกายน">พฤศจิกายน</option>
-                    <option value="ธันวาคม">ธันวาคม</option>
+                    <option value="1">มกราคม</option>
+                    <option value="2">กุมภาพันธ์</option>
+                    <option value="3">มีนาคม</option>
+                    <option value="4">เมษายน</option>
+                    <option value="5">พฤษภาคม</option>
+                    <option value="6">มิถุนายน</option>
+                    <option value="7">กรกฎาคม</option>
+                    <option value="8">สิงหาคม</option>
+                    <option value="9">กันยายน</option>
+                    <option value="10">ตุลาคม</option>
+                    <option value="11">พฤศจิกายน</option>
+                    <option value="12">ธันวาคม</option>
                 </select>
             </div>
 
@@ -201,7 +245,15 @@
                 <label for="district">อำเภอ</label>
                 <select id="district" name="district" required>
                     <option value="">เลือกอำเภอ</option>
-                    </select>
+                    <option value="เมืองชัยนาท">เมืองชัยนาท</option>
+                    <option value="มโนรมย์">มโนรมย์</option>
+                    <option value="วัดสิงห์">วัดสิงห์</option>
+                    <option value="สรรพยา">สรรพยา</option>
+                    <option value="สรรคบุรี">สรรคบุรี</option>
+                    <option value="หันคา">หันคา</option>
+                    <option value="หนองมะโมง">หนองมะโมง</option>
+                    <option value="เนินขาม">เนินขาม</option>
+                </select>
             </div>
 
             <div class="form-section">
@@ -263,21 +315,60 @@
         </form>
     </div>
 
-    <script>
+    <!-- Custom Message Box -->
+    <div class="overlay" id="overlay"></div>
+    <div class="message-box" id="messageBox">
+        <h3 id="messageTitle"></h3>
+        <p id="messageContent"></p>
+        <button id="messageBoxOk">ตกลง</button>
+    </div>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBjpWPABH5IECLayGmXcRfsD1lph74REPg",
+            authDomain: "chainathepatitis.firebaseapp.com",
+            projectId: "chainathepatitis",
+            storageBucket: "chainathepatitis.firebasestorage.app",
+            messagingSenderId: "82240896413",
+            appId: "1:82240896413:web:502c43e88aabf9d7de0374",
+            measurementId: "G-STZRHL8H87"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app); // Initialize Analytics
+        const auth = getAuth(app);
+        const db = getFirestore(app); // Get the Firestore service
+
+        // Custom Message Box functions (replacing alert)
+        function showMessageBox(title, message, callback) {
+            document.getElementById('messageTitle').textContent = title;
+            document.getElementById('messageContent').textContent = message;
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('messageBox').style.display = 'block';
+            document.getElementById('messageBoxOk').onclick = () => {
+                document.getElementById('overlay').style.display = 'none';
+                document.getElementById('messageBox').style.display = 'none';
+                if (callback) callback();
+            };
+        }
+
+        // Check if user is logged in, if not, redirect to login page
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'admin_login.html'; // Redirect if not logged in
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
-            const allDistricts = [
-                "เมืองชัยนาท", "มโนรมย์", "วัดสิงห์", "สรรพยา",
-                "สรรคบุรี", "หันคา", "หนองมะโมง", "เนินขาม",
-            ];
-
-            const districtSelect = document.getElementById('district');
-            allDistricts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district;
-                option.textContent = district;
-                districtSelect.appendChild(option);
-            });
-
             // Set current date as default for reportDate
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -286,23 +377,41 @@
             document.getElementById('reportDate').value = `${yyyy}-${mm}-${dd}`;
 
             // Handle form submission
-            document.getElementById('reportForm').addEventListener('submit', function(event) {
+            document.getElementById('reportForm').addEventListener('submit', async function(event) {
                 event.preventDefault(); // Prevent default form submission
 
                 const district = document.getElementById('district').value;
-                let allData = JSON.parse(localStorage.getItem('screeningData')) || {};
-                const existingDistrictData = allData[district] || {};
-                // Ensure target from admin_dashboard is used if available, otherwise default to 0
-                const screeningTargetForDistrict = existingDistrictData.target || 0; 
+                const reportMonth = document.getElementById('reportMonth').value;
 
+                if (!district || !reportMonth) {
+                    showMessageBox('ข้อผิดพลาด', 'กรุณาเลือกอำเภอและเดือนที่รายงานให้ครบถ้วน');
+                    return;
+                }
+
+                // Fetch the screening target for the selected district from Firestore
+                let screeningTargetForDistrict = 0;
+                try {
+                    const targetDocRef = doc(db, 'targets', district);
+                    const docSnap = await getDoc(targetDocRef);
+                    if (docSnap.exists()) {
+                        screeningTargetForDistrict = docSnap.data().target || 0;
+                    } else {
+                        showMessageBox('ข้อมูลเป้าหมายไม่พบ', `ไม่พบข้อมูลเป้าหมายการคัดกรองสำหรับอำเภอ ${district} จะใช้ค่า 0 เป็นเป้าหมาย`);
+                    }
+                } catch (error) {
+                    console.error("Error fetching screening target:", error);
+                    showMessageBox('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการดึงข้อมูลเป้าหมาย: ${error.message}`);
+                    return;
+                }
 
                 const formData = {
                     reportDate: document.getElementById('reportDate').value,
-                    reportMonth: document.getElementById('reportMonth').value,
+                    reportMonth: reportMonth, // Store as number for consistency
                     district: district,
                     hbvScreening: parseInt(document.getElementById('hbvScreening').value) || 0,
                     hcvScreening: parseInt(document.getElementById('hcvScreening').value) || 0,
-                    screeningTarget: screeningTargetForDistrict, // Use the target from existing data
+                    // Use the fetched target
+                    screeningTarget: screeningTargetForDistrict, 
                     hbvPositive: parseInt(document.getElementById('hbvPositive').value) || 0,
                     hcvPositive: parseInt(document.getElementById('hcvPositive').value) || 0,
                     hbvLiverAssessment: parseInt(document.getElementById('hbvLiverAssessment').value) || 0,
@@ -310,49 +419,40 @@
                     hcvDetect: parseInt(document.getElementById('hcvDetect').value) || 0,
                     hcvTreated: parseInt(document.getElementById('hcvTreated').value) || 0,
                     reportingUnit: document.getElementById('reportingUnit').value,
+                    timestamp: new Date().toISOString() // Add a timestamp for ordering/tracking
                 };
 
                 // Calculate percentages before saving (matching index.html's logic for consistency)
-                // ร้อยละผู้ติดเชื้อ HBV ส่งตรวจตับ: hbvLiverAssessment / hbvPositive * 100
-                let percentageHbvLiverAssessment = (formData.hbvPositive > 0) ? ((formData.hbvLiverAssessment / formData.hbvPositive) * 100).toFixed(2) : '0.00';
+                const hbvPositive = formData.hbvPositive;
+                const hcvPositive = formData.hcvPositive;
+                const hcvViralLoadTest = formData.hcvViralLoadTest;
+
+                let percentageHbvLiverAssessment = (hbvPositive > 0) ? ((formData.hbvLiverAssessment / hbvPositive) * 100) : 0;
                 if (percentageHbvLiverAssessment > 100) percentageHbvLiverAssessment = 100;
 
-                // ร้อยละผู้ติดเชื้อ HCV ส่งตรวจ VL/Core: hcvViralLoadTest / hcvPositive * 100
-                let percentageHcvViralLoadTest = (formData.hcvPositive > 0) ? ((formData.hcvViralLoadTest / formData.hcvPositive) * 100).toFixed(2) : '0.00';
+                let percentageHcvViralLoadTest = (hcvPositive > 0) ? ((hcvViralLoadTest / hcvPositive) * 100) : 0;
                 if (percentageHcvViralLoadTest > 100) percentageHcvViralLoadTest = 100;
 
-                // ร้อยละการรักษา HCV: hcvTreated / hcvViralLoadTest * 100 (ตามที่ตกลงล่าสุด)
-                let percentageHcvTreated = (formData.hcvViralLoadTest > 0) ? ((formData.hcvTreated / formData.hcvViralLoadTest) * 100).toFixed(2) : '0.00';
+                let percentageHcvTreated = (hcvViralLoadTest > 0) ? ((formData.hcvTreated / hcvViralLoadTest) * 100) : 0;
                 if (percentageHcvTreated > 100) percentageHcvTreated = 100;
 
+                // Add percentages to formData for saving
+                formData.percentage_hbv_liver_assessment = parseFloat(percentageHbvLiverAssessment.toFixed(2));
+                formData.percentage_hcv_viral_load_test = parseFloat(percentageHcvViralLoadTest.toFixed(2));
+                formData.percentage_hcv_treated = parseFloat(percentageHcvTreated.toFixed(2));
 
-                // Update data for the specific district
-                allData[formData.district] = {
-                    // Retain target from admin_dashboard or existing data
-                    target: screeningTargetForDistrict, 
-                    // Update all other fields from the form
-                    hbv: formData.hbvScreening,
-                    hcv: formData.hcvScreening,
-                    hbv_positive: formData.hbvPositive,
-                    hcv_positive: formData.hcvPositive,
-                    hbv_liver_assessment: formData.hbvLiverAssessment,
-                    hcv_viral_load_test: formData.hcvViralLoadTest,
-                    hcv_detect: formData.hcvDetect,
-                    hcv_treated: formData.hcvTreated,
-                    unit: formData.reportingUnit,
-                    // Store the calculated percentages for consistency, though index.html recalculates
-                    percentage_hbv_liver_assessment: parseFloat(percentageHbvLiverAssessment),
-                    percentage_hcv_viral_load_test: parseFloat(percentageHcvViralLoadTest),
-                    percentage_hcv_treated: parseFloat(percentageHcvTreated),
-                    report_date: formData.reportDate,
-                    report_month: formData.reportMonth
-                };
+                try {
+                    // Add a new document to the 'reports' collection
+                    // We use addDoc here to let Firestore generate a unique ID for each report
+                    await addDoc(collection(db, 'reports'), formData);
 
-                // Save updated data back to localStorage
-                localStorage.setItem('screeningData', JSON.stringify(allData));
-
-                alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
-                window.location.href = 'index.html'; // Redirect back to dashboard
+                    showMessageBox('บันทึกสำเร็จ', 'บันทึกข้อมูลเรียบร้อยแล้ว!', () => {
+                        window.location.href = 'index.html'; // Redirect back to dashboard
+                    });
+                } catch (error) {
+                    console.error("Error saving report data:", error);
+                    showMessageBox('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการบันทึกข้อมูล: ${error.message}`);
+                }
             });
         });
     </script>
