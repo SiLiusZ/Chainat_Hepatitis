@@ -304,7 +304,26 @@
                 <h2>ข้อมูลหน่วยงาน</h2>
                 <div class="form-group">
                     <label for="reportingUnit">4.1 ชื่อหน่วยงาน</label>
-                    <input type="text" id="reportingUnit" name="reportingUnit">
+                    <!-- Changed from input type="text" to select dropdown -->
+                    <select id="reportingUnit" name="reportingUnit" required>
+                        <option value="">เลือกหน่วยงาน</option>
+                        <option value="โรงพยาบาลชัยนาทนเรนทร">โรงพยาบาลชัยนาทนเรนทร</option>
+                        <option value="โรงพยาบาลมโนรมย์">โรงพยาบาลมโนรมย์</option>
+                        <option value="โรงพยาบาลวัดสิงห์">โรงพยาบาลวัดสิงห์</option>
+                        <option value="โรงพยาบาลสรรพยา">โรงพยาบาลสรรพยา</option>
+                        <option value="โรงพยาบาลสรรคบุรี">โรงพยาบาลสรรคบุรี</option>
+                        <option value="โรงพยาบาลหันคา">โรงพยาบาลหันคา</option>
+                        <option value="โรงพยาบาลหนองมะโมง">โรงพยาบาลหนองมะโมง</option>
+                        <option value="โรงพยาบาลเนินขาม">โรงพยาบาลเนินขาม</option>
+                        <option value="สำนักงานสาธารณสุขอำเภอเมืองชัยนาท">สำนักงานสาธารณสุขอำเภอเมืองชัยนาท</option>
+                        <option value="สำนักงานสาธารณสุขอำเภอมโนรมย์">สำนักงานสาธารณสุขอำเภอมโนรมย์</option>
+                        <option value="สำนักงานสาธารณสุขอำเภอวัดสิงห์">สำนักงานสาธารณสุขอำเภอวัดสิงห์</option>
+                        <option value="สำนักงานสาธารณสุขอำเภอสรรพยา">สำนักงานสาธารณสุขอำเภอสรรพยา</option>
+                        <option value="สำนักงานสาธารณสุขอำเภอสรรคบุรี">สำนักงานสาธารณสุขอำเภอสรรคบุรี</option>
+                        <option value="สำนักงานสาธารณสุขอำเภอหันคา">สำนักงานสาธารณสุขอำเภอหันคา</option>
+                        <option value="สำนักงานสาธารณสุขอำเภอหนองมะโมง">สำนักงานสาธารณสุขอำเภอหนองมะโมง</option>
+                        <option value="สำนักงานสาธารณสุขอำเภอเนินขาม">สำนักงานสาธารณสุขอำเภอเนินขาม</option>
+                    </select>
                 </div>
             </div>
 
@@ -382,9 +401,10 @@
 
                 const district = document.getElementById('district').value;
                 const reportMonth = document.getElementById('reportMonth').value;
+                const reportingUnit = document.getElementById('reportingUnit').value; // Get value from the new select
 
-                if (!district || !reportMonth) {
-                    showMessageBox('ข้อผิดพลาด', 'กรุณาเลือกอำเภอและเดือนที่รายงานให้ครบถ้วน');
+                if (!district || !reportMonth || !reportingUnit) { // Added reportingUnit check
+                    showMessageBox('ข้อผิดพลาด', 'กรุณาเลือกอำเภอ, เดือนที่รายงาน และชื่อหน่วยงานให้ครบถ้วน');
                     return;
                 }
 
@@ -418,7 +438,7 @@
                     hcvViralLoadTest: parseInt(document.getElementById('hcvViralLoadTest').value) || 0,
                     hcvDetect: parseInt(document.getElementById('hcvDetect').value) || 0,
                     hcvTreated: parseInt(document.getElementById('hcvTreated').value) || 0,
-                    reportingUnit: document.getElementById('reportingUnit').value,
+                    reportingUnit: reportingUnit, // Use the value from the select
                     timestamp: new Date().toISOString() // Add a timestamp for ordering/tracking
                 };
 
