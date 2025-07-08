@@ -11,9 +11,9 @@
     <style>
         body {
             font-family: 'IBM Plex Sans Thai', sans-serif;
-            margin: 0;
             background-color: #f0f2f5;
-            padding-bottom: 50px; /* Add some padding at the bottom */
+            margin: 0;
+            padding: 20px;
         }
 
         .navbar {
@@ -689,7 +689,6 @@
                         <th>HBV+</th>
                         <th>HBV ตรวจความรุนแรงของตับ</th>
                         <th>HCV VL+ Coreag+</th>
-                        <!-- <th>จำนวนHCV ส่งตรวจยืนยัน</th> --> <!-- Removed this column -->
                         <th>HCV รับยา</th>
                         <th>HCV Detect (ใหม่)</th>
                     </tr>
@@ -824,6 +823,18 @@
             "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
         ];
 
+        // Define the desired order of districts
+        const orderedDistricts = [
+            "เมืองชัยนาท",
+            "มโนรมย์",
+            "วัดสิงห์",
+            "สรรพยา",
+            "สรรคบุรี",
+            "หันคา",
+            "หนองมะโมง",
+            "เนินขาม"
+        ];
+
         // Global object to store latest report data for each district and targets
         let allReportsData = {};
         let allTargetsData = {};
@@ -929,19 +940,20 @@
             const tableBody = document.querySelector('.summary-data-table tbody');
             tableBody.innerHTML = '';
 
-            const allDistricts = [
-                "เมืองชัยนาท", "มโนรมย์", "วัดสิงห์", "สรรพยา",
-                "สรรคบุรี", "หันคา", "หนองมะโมง", "เนินขาม"
-            ];
+            // Use the predefined orderedDistricts for rendering
+            // Filter to only include districts that have data in allReportsData or allTargetsData
+            const districtsToRender = orderedDistricts.filter(districtName => 
+                allReportsData[districtName] || allTargetsData[districtName]
+            );
 
-            if (Object.keys(allReportsData).length === 0 && Object.keys(allTargetsData).length === 0) {
+            if (districtsToRender.length === 0) {
                 const noDataRow = document.createElement('tr');
-                noDataRow.innerHTML = `<td colspan="9" style="text-align: center; color: #777;">ไม่มีข้อมูลให้แสดงในตาราง</td>`; // Adjusted colspan
+                noDataRow.innerHTML = `<td colspan="9" style="text-align: center; color: #777;">ไม่มีข้อมูลให้แสดงในตาราง</td>`;
                 tableBody.appendChild(noDataRow);
                 return;
             }
 
-            allDistricts.forEach(districtName => {
+            districtsToRender.forEach(districtName => {
                 const districtReport = allReportsData[districtName] || {};
                 const districtTarget = allTargetsData[districtName] || 0; // Get target from allTargetsData
 
@@ -969,16 +981,17 @@
             yAxisLabelsContainer.innerHTML = '';
             chartBarsContainer.innerHTML = '';
 
-            const districtsWithData = Object.values(allReportsData).filter(report => report.district);
+            // Filter and sort districts based on the predefined order
+            const districtsToChart = orderedDistricts.filter(districtName => allReportsData[districtName]);
 
-            if (districtsWithData.length === 0) {
+            if (districtsToChart.length === 0) {
                 yAxisLabelsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;">ไม่มีข้อมูลกราฟ</div>';
                 chartBarsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;"></div>';
                 return;
             }
 
-            districtsWithData.forEach(reportData => {
-                const districtName = reportData.district;
+            districtsToChart.forEach(districtName => {
+                const reportData = allReportsData[districtName]; // Get report data for the current district
                 const hbvScreening = parseFloat(reportData.hbvScreening || 0);
                 const hbvPositive = parseFloat(reportData.hbvPositive || 0);
                 const target = parseFloat(allTargetsData[districtName] || 0); // Get target from allTargetsData
@@ -1032,16 +1045,17 @@
             yAxisLabelsContainer.innerHTML = '';
             chartBarsContainer.innerHTML = '';
 
-            const districtsWithData = Object.values(allReportsData).filter(report => report.district);
+            // Filter and sort districts based on the predefined order
+            const districtsToChart = orderedDistricts.filter(districtName => allReportsData[districtName]);
 
-            if (districtsWithData.length === 0) {
+            if (districtsToChart.length === 0) {
                 yAxisLabelsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;">ไม่มีข้อมูลกราฟ</div>';
                 chartBarsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;"></div>';
                 return;
             }
 
-            districtsWithData.forEach(reportData => {
-                const districtName = reportData.district;
+            districtsToChart.forEach(districtName => {
+                const reportData = allReportsData[districtName]; // Get report data for the current district
                 const hcvScreening = parseFloat(reportData.hcvScreening || 0);
                 const hcvViralLoadTest = parseFloat(reportData.hcvViralLoadTest || 0);
                 const hcvTreated = parseFloat(reportData.hcvTreated || 0);
