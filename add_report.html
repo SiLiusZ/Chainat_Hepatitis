@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบฟอร์มรายงานผลการดำเนินงาน</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'IBM Plex Sans Thai', sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            padding-bottom: 50px;
+        }
+
+        .navbar {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar .title {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .form-section h2 {
+            font-size: 1.3em;
+            color: #007bff;
+            margin-bottom: 15px;
+            padding-left: 5px;
+            border-left: 4px solid #007bff;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.95em;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .form-group input[type="date"],
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'IBM Plex Sans Thai', sans-serif;
+            font-size: 1em;
+            box-sizing: border-box; /* Include padding in width calculation */
+        }
+
+        .form-group input[type="date"] {
+            /* Adjust date input icon appearance if needed */
+        }
+
+        .form-group select {
+            appearance: none; /* Remove default arrow */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20512%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M192%20256L64%20128v256l128-128z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .form-actions button {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-actions button[type="submit"] {
+            background-color: #28a745; /* Green for submit */
+            color: white;
+        }
+
+        .form-actions button[type="submit"]:hover {
+            background-color: #218838;
+        }
+
+        .form-actions button[type="button"] { /* For Cancel or Back */
+            background-color: #6c757d; /* Grey */
+            color: white;
+        }
+
+        .form-actions button[type="button"]:hover {
+            background-color: #5a6268;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .container {
+                margin: 15px;
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            .form-section h2 {
+                font-size: 1.2em;
+            }
+            .form-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="title">
+            ระบบรายงานผลการคัดกรองและรักษาไวรัสตับอักเสบ<br>สำนักงานสาธารณสุขจังหวัดชัยนาท
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>แบบฟอร์มรายงานผลการดำเนินงาน<br>คัดกรองและรักษาไวรัสตับอักเสบ บี และ ซี จังหวัดชัยนาท ปี 2568</h1>
+
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="reportDate">วันที่บันทึก</label>
+                <input type="date" id="reportDate" name="reportDate" value="2025-07-07" required>
+            </div>
+
+            <div class="form-group">
+                <label for="reportMonth">เดือนที่รายงาน</label>
+                <select id="reportMonth" name="reportMonth" required>
+                    <option value="">เลือกเดือน</option>
+                    <option value="มกราคม">มกราคม</option>
+                    <option value="กุมภาพันธ์">กุมภาพันธ์</option>
+                    <option value="มีนาคม">มีนาคม</option>
+                    <option value="เมษายน">เมษายน</option>
+                    <option value="พฤษภาคม">พฤษภาคม</option>
+                    <option value="มิถุนายน">มิถุนายน</option>
+                    <option value="กรกฎาคม">กรกฎาคม</option>
+                    <option value="สิงหาคม">สิงหาคม</option>
+                    <option value="กันยายน">กันยายน</option>
+                    <option value="ตุลาคม">ตุลาคม</option>
+                    <option value="พฤศจิกายน">พฤศจิกายน</option>
+                    <option value="ธันวาคม">ธันวาคม</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="district">อำเภอ</label>
+                <select id="district" name="district" required>
+                    <option value="">เลือกอำเภอ</option>
+                    </select>
+            </div>
+
+            <div class="form-section">
+                <h2>ข้อมูลการคัดกรอง</h2>
+                <div class="form-group">
+                    <label for="hbvScreening">1.1 จำนวนตรวจคัดกรอง HBV (ไวรัสตับอักเสบ บี) (รหัสคัดกรอง 1B010)</label>
+                    <input type="number" id="hbvScreening" name="hbvScreening" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="hcvScreening">1.2 จำนวนตรวจคัดกรอง HCV (ไวรัสตับอักเสบ ซี) (รหัสคัดกรอง 1B011)</label>
+                    <input type="number" id="hcvScreening" name="hcvScreening" min="0" value="0">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>ผลการตรวจคัดกรอง</h2>
+                <div class="form-group">
+                    <label for="hbvPositive">2.1 จำนวนตรวจคัดกรอง HBV ได้ผลเป็นบวก (รหัส 1B0100)</label>
+                    <input type="number" id="hbvPositive" name="hbvPositive" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="hcvPositive">2.2 จำนวนผลคัดกรอง HCV (anti-HCV) ได้ผลเป็นบวก</label>
+                    <input type="number" id="hcvPositive" name="hcvPositive" min="0" value="0">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>ติดตามและรักษา</h2>
+                <div class="form-group">
+                    <label for="hbvLiverAssessment">3.1 จำนวนผู้ติดเชื้อ HBV และส่งตรวจประเมินภาวะความรุนแรงของตับ</label>
+                    <input type="number" id="hbvLiverAssessment" name="hbvLiverAssessment" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="hcvViralLoadTest">3.2 จำนวนส่งตรวจ HCV viral load หรือ HCV core</label>
+                    <input type="number" id="hcvViralLoadTest" name="hcvViralLoadTest" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="hcvDetect">3.3 จำนวนผู้ติดเชื้อ HCV (HCV viral load หรือ HCV CoreAg ผล detect)</label>
+                    <input type="number" id="hcvDetect" name="hcvDetect" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="hcvTreated">3.4 ผู้ติดเชื้อ HCV ได้รับการรักษา</label>
+                    <input type="number" id="hcvTreated" name="hcvTreated" min="0" value="0">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>ข้อมูลหน่วยงาน</h2>
+                <div class="form-group">
+                    <label for="reportingUnit">4.1 ชื่อหน่วยงาน</label>
+                    <input type="text" id="reportingUnit" name="reportingUnit">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" onclick="window.history.back()">ย้อนกลับ</button>
+                <button type="submit">บันทึกข้อมูล</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const allDistricts = [
+                "เมืองชัยนาท", "มโนรมย์", "วัดสิงห์", "สรรพยา",
+                "สรรคบุรี", "หันคา", "หนองมะโมง", "เนินขาม",
+            ];
+
+            const districtSelect = document.getElementById('district');
+            allDistricts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                districtSelect.appendChild(option);
+            });
+
+            // Set current date as default for reportDate
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
+            const dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('reportDate').value = `${yyyy}-${mm}-${dd}`;
+
+            // Handle form submission
+            document.getElementById('reportForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent default form submission
+
+                const district = document.getElementById('district').value;
+                let allData = JSON.parse(localStorage.getItem('screeningData')) || {};
+                const existingDistrictData = allData[district] || {};
+                // Ensure target from admin_dashboard is used if available, otherwise default to 0
+                const screeningTargetForDistrict = existingDistrictData.target || 0; 
+
+
+                const formData = {
+                    reportDate: document.getElementById('reportDate').value,
+                    reportMonth: document.getElementById('reportMonth').value,
+                    district: district,
+                    hbvScreening: parseInt(document.getElementById('hbvScreening').value) || 0,
+                    hcvScreening: parseInt(document.getElementById('hcvScreening').value) || 0,
+                    screeningTarget: screeningTargetForDistrict, // Use the target from existing data
+                    hbvPositive: parseInt(document.getElementById('hbvPositive').value) || 0,
+                    hcvPositive: parseInt(document.getElementById('hcvPositive').value) || 0,
+                    hbvLiverAssessment: parseInt(document.getElementById('hbvLiverAssessment').value) || 0,
+                    hcvViralLoadTest: parseInt(document.getElementById('hcvViralLoadTest').value) || 0,
+                    hcvDetect: parseInt(document.getElementById('hcvDetect').value) || 0,
+                    hcvTreated: parseInt(document.getElementById('hcvTreated').value) || 0,
+                    reportingUnit: document.getElementById('reportingUnit').value,
+                };
+
+                // Calculate percentages before saving (matching index.html's logic for consistency)
+                // ร้อยละผู้ติดเชื้อ HBV ส่งตรวจตับ: hbvLiverAssessment / hbvPositive * 100
+                let percentageHbvLiverAssessment = (formData.hbvPositive > 0) ? ((formData.hbvLiverAssessment / formData.hbvPositive) * 100).toFixed(2) : '0.00';
+                if (percentageHbvLiverAssessment > 100) percentageHbvLiverAssessment = 100;
+
+                // ร้อยละผู้ติดเชื้อ HCV ส่งตรวจ VL/Core: hcvViralLoadTest / hcvPositive * 100
+                let percentageHcvViralLoadTest = (formData.hcvPositive > 0) ? ((formData.hcvViralLoadTest / formData.hcvPositive) * 100).toFixed(2) : '0.00';
+                if (percentageHcvViralLoadTest > 100) percentageHcvViralLoadTest = 100;
+
+                // ร้อยละการรักษา HCV: hcvTreated / hcvViralLoadTest * 100 (ตามที่ตกลงล่าสุด)
+                let percentageHcvTreated = (formData.hcvViralLoadTest > 0) ? ((formData.hcvTreated / formData.hcvViralLoadTest) * 100).toFixed(2) : '0.00';
+                if (percentageHcvTreated > 100) percentageHcvTreated = 100;
+
+
+                // Update data for the specific district
+                allData[formData.district] = {
+                    // Retain target from admin_dashboard or existing data
+                    target: screeningTargetForDistrict, 
+                    // Update all other fields from the form
+                    hbv: formData.hbvScreening,
+                    hcv: formData.hcvScreening,
+                    hbv_positive: formData.hbvPositive,
+                    hcv_positive: formData.hcvPositive,
+                    hbv_liver_assessment: formData.hbvLiverAssessment,
+                    hcv_viral_load_test: formData.hcvViralLoadTest,
+                    hcv_detect: formData.hcvDetect,
+                    hcv_treated: formData.hcvTreated,
+                    unit: formData.reportingUnit,
+                    // Store the calculated percentages for consistency, though index.html recalculates
+                    percentage_hbv_liver_assessment: parseFloat(percentageHbvLiverAssessment),
+                    percentage_hcv_viral_load_test: parseFloat(percentageHcvViralLoadTest),
+                    percentage_hcv_treated: parseFloat(percentageHcvTreated),
+                    report_date: formData.reportDate,
+                    report_month: formData.reportMonth
+                };
+
+                // Save updated data back to localStorage
+                localStorage.setItem('screeningData', JSON.stringify(allData));
+
+                alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+                window.location.href = 'index.html'; // Redirect back to dashboard
+            });
+        });
+    </script>
+</body>
+</html>
