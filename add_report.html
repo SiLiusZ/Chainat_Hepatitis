@@ -6,7 +6,7 @@
     <title>แบบฟอร์มรายงานผลการดำเนินงาน</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
@@ -347,7 +347,7 @@
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // Removed getAuth, onAuthStateChanged as login is no longer required
         import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Your web app's Firebase configuration
@@ -364,7 +364,8 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app); // Initialize Analytics
-        const auth = getAuth(app);
+        // Removed Auth initialization as login is no longer required
+        // const auth = getAuth(app); 
         const db = getFirestore(app); // Get the Firestore service
 
         // Custom Message Box functions (replacing alert)
@@ -380,12 +381,14 @@
             };
         }
 
-        // Check if user is logged in, if not, redirect to login page
+        // Removed onAuthStateChanged check as login is no longer required
+        /*
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'admin_login.html'; // Redirect if not logged in
             }
         });
+        */
 
         document.addEventListener('DOMContentLoaded', function() {
             // Set current date as default for reportDate
