@@ -689,8 +689,8 @@
                         <th>HBV+</th>
                         <th>HBV ตรวจความรุนแรงของตับ</th>
                         <th>HCV VL+ Coreag+</th>
+                        <!-- <th>จำนวนHCV ส่งตรวจยืนยัน</th> --> <!-- Removed this column -->
                         <th>HCV รับยา</th>
-                        <th>จำนวนHCV ส่งตรวจยืนยัน</th>
                         <th>HCV Detect (ใหม่)</th>
                     </tr>
                 </thead>
@@ -796,19 +796,27 @@
         <div id="noReportData" style="text-align: center; margin-top: 20px; color: #666; display: none;">ยังไม่มีข้อมูลการรายงานในระบบ</div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            loadDashboardData();
-            renderSummaryTable();
-            renderHbvChart(); // เรียกใช้ฟังก์ชันสำหรับกราฟ HBV
-            renderHcvChart(); // เรียกใช้ฟังก์ชันสำหรับกราฟ HCV
-            renderReportTable(); // NEW: Call to render the new report table
-        });
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+        import { getFirestore, collection, query, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        const allDistricts = [
-            "เมืองชัยนาท", "มโนรมย์", "วัดสิงห์", "สรรพยา",
-            "สรรคบุรี", "หันคา", "หนองมะโมง", "เนินขาม"
-        ];
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBjpWPABH5IECLayGmXcRfsD1lph74REPg",
+            authDomain: "chainathepatitis.firebaseapp.com",
+            projectId: "chainathepatitis",
+            storageBucket: "chainathepatitis.firebasestorage.app",
+            messagingSenderId: "82240896413",
+            appId: "1:82240896413:web:502c43e88aabf9d7de0374",
+            measurementId: "G-STZRHL8H87"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app); // Initialize Analytics
+        const db = getFirestore(app); // Get the Firestore service
 
         const thaiMonths = [
             "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
@@ -816,9 +824,61 @@
             "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
         ];
 
-        function loadDashboardData() {
-            const data = JSON.parse(localStorage.getItem('screeningData')) || {};
+        // Global object to store latest report data for each district and targets
+        let allReportsData = {};
+        let allTargetsData = {};
 
+        // Function to fetch and listen to real-time updates for reports
+        function listenForReports() {
+            const reportsColRef = collection(db, 'reports');
+            const q = query(reportsColRef); // No ordering here, we'll sort in JS
+
+            onSnapshot(q, (snapshot) => {
+                const tempReports = {};
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Store only the latest report for each district
+                    // Assuming 'timestamp' is present and can be used for latest
+                    if (!tempReports[data.district] || new Date(data.timestamp) > new Date(tempReports[data.district].timestamp)) {
+                        tempReports[data.district] = { id: doc.id, ...data };
+                    }
+                });
+                allReportsData = tempReports;
+                updateDashboardAndTables();
+            }, (error) => {
+                console.error("Error listening to reports:", error);
+                // Optionally display an error message on the dashboard
+            });
+        }
+
+        // Function to fetch and listen to real-time updates for targets
+        function listenForTargets() {
+            const targetsColRef = collection(db, 'targets');
+            const q = query(targetsColRef);
+
+            onSnapshot(q, (snapshot) => {
+                const tempTargets = {};
+                snapshot.forEach(doc => {
+                    tempTargets[doc.id] = doc.data().target || 0; // Store target by district ID
+                });
+                allTargetsData = tempTargets;
+                updateDashboardAndTables();
+            }, (error) => {
+                console.error("Error listening to targets:", error);
+                // Optionally display an error message
+            });
+        }
+
+        // Main function to update all dashboard elements
+        function updateDashboardAndTables() {
+            loadDashboardData();
+            renderSummaryTable();
+            renderHbvChart();
+            renderHcvChart();
+            renderReportTable();
+        }
+
+        function loadDashboardData() {
             let totalHbv = 0;
             let totalHcv = 0;
             let totalDistrictsWithData = 0;
@@ -826,26 +886,26 @@
             let totalHbvPositive = 0;
             let totalHcvPositive = 0;
             let totalHbvLiverAssessment = 0;
-            let totalHcvViralLoadTest = 0; // Renamed for clarity: HCV VL+ Coreag+
-            let totalHcvDetect = 0; // For HCV Detect column in the report table (not used in percentage calculation based on your request)
+            let totalHcvViralLoadTest = 0;
             let totalHcvTreated = 0;
 
-
-            allDistricts.forEach(districtName => {
-                if (data[districtName]) {
-                    totalDistrictsWithData++;
-                    const d = data[districtName]; // Use a shorter alias
-                    totalHbv += parseFloat(d.hbv || 0);
-                    totalHcv += parseFloat(d.hcv || 0);
-                    totalScreeningTargetSum += parseFloat(d.target || 0);
-                    totalHbvPositive += parseFloat(d.hbv_positive || 0);
-                    totalHcvPositive += parseFloat(d.hcv_positive || 0);
-                    totalHbvLiverAssessment += parseFloat(d.hbv_liver_assessment || 0);
-                    totalHcvViralLoadTest += parseFloat(d.hcv_viral_load_test || 0); // HCV VL+ Coreag+
-                    totalHcvDetect += parseFloat(d.hcv_detect || 0); // Assuming this is for HCV Detect column
-                    totalHcvTreated += parseFloat(d.hcv_treated || 0);
-                }
+            // Iterate through the latest reports for each district
+            Object.values(allReportsData).forEach(data => {
+                totalDistrictsWithData++;
+                totalHbv += parseFloat(data.hbvScreening || 0);
+                totalHcv += parseFloat(data.hcvScreening || 0);
+                totalHbvPositive += parseFloat(data.hbvPositive || 0);
+                totalHcvPositive += parseFloat(data.hcvPositive || 0);
+                totalHbvLiverAssessment += parseFloat(data.hbvLiverAssessment || 0);
+                totalHcvViralLoadTest += parseFloat(data.hcvViralLoadTest || 0);
+                totalHcvTreated += parseFloat(data.hcvTreated || 0);
             });
+
+            // Sum up targets from all districts in allTargetsData
+            Object.values(allTargetsData).forEach(target => {
+                totalScreeningTargetSum += parseFloat(target || 0);
+            });
+
 
             document.getElementById('totalHbvScreened').textContent = totalHbv.toLocaleString();
             document.getElementById('totalHcvScreened').textContent = totalHcv.toLocaleString();
@@ -858,58 +918,58 @@
             let percentageHcvScreened = (totalScreeningTargetSum > 0) ? ((totalHcv / totalScreeningTargetSum) * 100).toFixed(2) : '0.00';
             document.getElementById('percentageHcvScreened').textContent = percentageHcvScreened + '%';
 
-            // Calculate percentage for HBV Treatment: (HBV ตรวจความรุนแรงของตับ / HBV+) * 100
             let percentageHbvTreated = (totalHbvPositive > 0) ? ((totalHbvLiverAssessment / totalHbvPositive) * 100).toFixed(2) : '0.00';
             document.getElementById('percentageHbvTreated').textContent = percentageHbvTreated + '%';
 
-            // Calculate percentage for HCV Treatment: (HCV รับยา / HCV VL+ Coreag+) * 100
-            // IMPORTANT: Using totalHcvViralLoadTest (HCV VL+ Coreag+) as the denominator as requested.
             let percentageHcvTreated = (totalHcvViralLoadTest > 0) ? ((totalHcvTreated / totalHcvViralLoadTest) * 100).toFixed(2) : '0.00';
             document.getElementById('percentageHcvTreated').textContent = percentageHcvTreated + '%';
         }
 
         function renderSummaryTable() {
-            const data = JSON.parse(localStorage.getItem('screeningData')) || {};
             const tableBody = document.querySelector('.summary-data-table tbody');
             tableBody.innerHTML = '';
 
-            if (Object.keys(data).length === 0) { // Check if there's any data at all
+            const allDistricts = [
+                "เมืองชัยนาท", "มโนรมย์", "วัดสิงห์", "สรรพยา",
+                "สรรคบุรี", "หันคา", "หนองมะโมง", "เนินขาม"
+            ];
+
+            if (Object.keys(allReportsData).length === 0 && Object.keys(allTargetsData).length === 0) {
                 const noDataRow = document.createElement('tr');
-                noDataRow.innerHTML = `<td colspan="10" style="text-align: center; color: #777;">ไม่มีข้อมูลให้แสดงในตาราง</td>`;
+                noDataRow.innerHTML = `<td colspan="9" style="text-align: center; color: #777;">ไม่มีข้อมูลให้แสดงในตาราง</td>`; // Adjusted colspan
                 tableBody.appendChild(noDataRow);
                 return;
             }
 
             allDistricts.forEach(districtName => {
-                const districtData = data[districtName] || {}; // Use empty object if no data
+                const districtReport = allReportsData[districtName] || {};
+                const districtTarget = allTargetsData[districtName] || 0; // Get target from allTargetsData
+
                 const row = document.createElement('tr');
 
-                // Populate with actual data or 0 if undefined, and use toLocaleString for numbers
                 row.innerHTML = `
                     <td>${districtName}</td>
-                    <td>${(parseFloat(districtData.hbv) || 0).toLocaleString()}</td>
-                    <td>${(parseFloat(districtData.hcv) || 0).toLocaleString()}</td>
-                    <td>${(parseFloat(districtData.target) || 0).toLocaleString()}</td>
-                    <td>${(parseFloat(districtData.hbv_positive) || 0).toLocaleString()}</td>
-                    <td>${(parseFloat(districtData.hbv_liver_assessment) || 0).toLocaleString()}</td>
-                    <td>${(parseFloat(districtData.hcv_viral_load_test) || 0).toLocaleString()}</td>
-                    <td>${(parseFloat(districtData.hcv_treated) || 0).toLocaleString()}</td>
-                    <td>${(parseFloat(districtData.hcv_confirm_test || 0)).toLocaleString()}</td>
-                    <td>${(parseFloat(districtData.hcv_detect || 0)).toLocaleString()}</td>
+                    <td>${(parseFloat(districtReport.hbvScreening || 0)).toLocaleString()}</td>
+                    <td>${(parseFloat(districtReport.hcvScreening || 0)).toLocaleString()}</td>
+                    <td>${(parseFloat(districtTarget || 0)).toLocaleString()}</td>
+                    <td>${(parseFloat(districtReport.hbvPositive || 0)).toLocaleString()}</td>
+                    <td>${(parseFloat(districtReport.hbvLiverAssessment || 0)).toLocaleString()}</td>
+                    <td>${(parseFloat(districtReport.hcvViralLoadTest || 0)).toLocaleString()}</td>
+                    <td>${(parseFloat(districtReport.hcvTreated || 0)).toLocaleString()}</td>
+                    <td>${(parseFloat(districtReport.hcvDetect || 0)).toLocaleString()}</td>
                 `;
                 tableBody.appendChild(row);
             });
         }
 
         function renderHbvChart() {
-            const data = JSON.parse(localStorage.getItem('screeningData')) || {};
             const yAxisLabelsContainer = document.getElementById('hbvYAxisLabels');
             const chartBarsContainer = document.getElementById('hbvChartBars');
 
             yAxisLabelsContainer.innerHTML = '';
             chartBarsContainer.innerHTML = '';
 
-            const districtsWithData = allDistricts.filter(district => data[district]);
+            const districtsWithData = Object.values(allReportsData).filter(report => report.district);
 
             if (districtsWithData.length === 0) {
                 yAxisLabelsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;">ไม่มีข้อมูลกราฟ</div>';
@@ -917,14 +977,14 @@
                 return;
             }
 
-            districtsWithData.forEach(districtName => {
-                const districtData = data[districtName];
-                const hbvScreened = parseFloat(districtData.hbv) || 0;
-                const hbvPositive = parseFloat(districtData.hbv_positive) || 0;
-                const target = parseFloat(districtData.target) || 0;
-                const hbvLiverAssessment = parseFloat(districtData.hbv_liver_assessment) || 0;
+            districtsWithData.forEach(reportData => {
+                const districtName = reportData.district;
+                const hbvScreening = parseFloat(reportData.hbvScreening || 0);
+                const hbvPositive = parseFloat(reportData.hbvPositive || 0);
+                const target = parseFloat(allTargetsData[districtName] || 0); // Get target from allTargetsData
+                const hbvLiverAssessment = parseFloat(reportData.hbvLiverAssessment || 0);
 
-                const percentageScreened = (target > 0) ? (hbvScreened / target) * 100 : 0;
+                const percentageScreened = (target > 0) ? (hbvScreening / target) * 100 : 0;
                 const percentageTreated = (hbvPositive > 0) ? (hbvLiverAssessment / hbvPositive) * 100 : 0;
 
                 // Add Y-axis label
@@ -966,14 +1026,13 @@
         }
 
         function renderHcvChart() {
-            const data = JSON.parse(localStorage.getItem('screeningData')) || {};
             const yAxisLabelsContainer = document.getElementById('hcvYAxisLabels');
             const chartBarsContainer = document.getElementById('hcvChartBars');
 
             yAxisLabelsContainer.innerHTML = '';
             chartBarsContainer.innerHTML = '';
 
-            const districtsWithData = allDistricts.filter(district => data[district]);
+            const districtsWithData = Object.values(allReportsData).filter(report => report.district);
 
             if (districtsWithData.length === 0) {
                 yAxisLabelsContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#777;">ไม่มีข้อมูลกราฟ</div>';
@@ -981,14 +1040,14 @@
                 return;
             }
 
-            districtsWithData.forEach(districtName => {
-                const districtData = data[districtName];
-                const hcvScreened = parseFloat(districtData.hcv) || 0;
-                const hcvViralLoadTest = parseFloat(districtData.hcv_viral_load_test) || 0;
-                const hcvTreated = parseFloat(districtData.hcv_treated) || 0;
-                const target = parseFloat(districtData.target) || 0;
+            districtsWithData.forEach(reportData => {
+                const districtName = reportData.district;
+                const hcvScreening = parseFloat(reportData.hcvScreening || 0);
+                const hcvViralLoadTest = parseFloat(reportData.hcvViralLoadTest || 0);
+                const hcvTreated = parseFloat(reportData.hcvTreated || 0);
+                const target = parseFloat(allTargetsData[districtName] || 0); // Get target from allTargetsData
 
-                const percentageScreened = (target > 0) ? (hcvScreened / target) * 100 : 0;
+                const percentageScreened = (target > 0) ? (hcvScreening / target) * 100 : 0;
                 const percentageTreated = (hcvViralLoadTest > 0) ? (hcvTreated / hcvViralLoadTest) * 100 : 0;
 
                 // Add Y-axis label
@@ -1034,22 +1093,14 @@
             const noReportDataMessage = document.getElementById('noReportData');
             reportTableBody.innerHTML = ''; // Clear existing table rows
 
-            const storedData = localStorage.getItem('screeningData');
-            const allReports = storedData ? JSON.parse(storedData) : {};
+            // Convert allReportsData object to an array for sorting
+            const reportsArray = Object.values(allReportsData);
 
-            // Flatten the object of reports into an array
-            // Each entry in allReports (e.g., allReports['เมืองชัยนาท']) is already the latest report for that district.
-            const reportsArray = Object.values(allReports);
-
-            // Sort reports by report_date (newest first), or by district name if date is same/missing
+            // Sort reports by timestamp (newest first)
             reportsArray.sort((a, b) => {
-                const dateA = a.report_date ? new Date(a.report_date) : new Date(0); // Use epoch for missing dates
-                const dateB = b.report_date ? new Date(b.report_date) : new Date(0);
-                
-                if (dateB.getTime() !== dateA.getTime()) {
-                    return dateB.getTime() - dateA.getTime(); // Newest first
-                }
-                return (a.district || '').localeCompare(b.district || ''); // Alphabetical by district if dates are identical
+                const dateA = a.timestamp ? new Date(a.timestamp) : new Date(0);
+                const dateB = b.timestamp ? new Date(b.timestamp) : new Date(0);
+                return dateB.getTime() - dateA.getTime(); // Newest first
             });
 
             if (reportsArray.length === 0) {
@@ -1061,37 +1112,37 @@
 
             reportsArray.forEach(data => {
                 const row = document.createElement('tr');
-                // Calculate percentages within the table for display, rounding to 2 decimal places.
-                // Ensure values are parsed as floats for calculations.
-                const hbvPositive = parseFloat(data.hbv_positive || 0);
-                const hcvViralLoadTest = parseFloat(data.hcv_viral_load_test || 0);
-
-                const hbvLiverAssessment = parseFloat(data.hbv_liver_assessment || 0);
-                const hcvTreated = parseFloat(data.hcv_treated || 0);
                 
-                const percentageHbvLiverAssessment = (hbvPositive > 0) ? ((hbvLiverAssessment / hbvPositive) * 100).toFixed(2) : '0.00';
-                const percentageHcvViralLoadTest = (hcvViralLoadTest > 0) ? ((hcvViralLoadTest / hcvViralLoadTest) * 100).toFixed(2) : '0.00'; // Assuming HCV Viral Load column implies "Viral Load Done / HCV Positive"
-                const percentageHcvTreated = (hcvViralLoadTest > 0) ? ((hcvTreated / hcvViralLoadTest) * 100).toFixed(2) : '0.00';
-
+                // Use the pre-calculated percentages from the stored data, or recalculate if missing
+                const percentageHbvLiverAssessment = (data.percentage_hbv_liver_assessment !== undefined) ? data.percentage_hbv_liver_assessment.toFixed(2) : '0.00';
+                const percentageHcvViralLoadTest = (data.percentage_hcv_viral_load_test !== undefined) ? data.percentage_hcv_viral_load_test.toFixed(2) : '0.00';
+                const percentageHcvTreated = (data.percentage_hcv_treated !== undefined) ? data.percentage_hcv_treated.toFixed(2) : '0.00';
 
                 row.innerHTML = `
-                    <td data-label="วันที่บันทึก">${data.report_date || ''}</td>
-                    <td data-label="เดือน">${thaiMonths[(parseInt(data.report_month) || 1) - 1] || ''}</td>
+                    <td data-label="วันที่บันทึก">${data.reportDate || ''}</td>
+                    <td data-label="เดือน">${thaiMonths[(parseInt(data.reportMonth) || 1) - 1] || ''}</td>
                     <td data-label="อำเภอ">${data.district || ''}</td>
-                    <td data-label="HBV คัดกรอง">${(parseFloat(data.hbv) || 0).toLocaleString()}</td>
-                    <td data-label="HCV คัดกรอง">${(parseFloat(data.hcv) || 0).toLocaleString()}</td>
-                    <td data-label="เป้าหมาย">${(parseFloat(data.target) || 0).toLocaleString()}</td>
-                    <td data-label="HBV เป็นบวก">${(parseFloat(data.hbv_positive) || 0).toLocaleString()}</td>
-                    <td data-label="HCV เป็นบวก">${(parseFloat(data.hcv_positive) || 0).toLocaleString()}</td>
-                    <td data-label="HBV ส่งตรวจตับ">${(parseFloat(data.hbv_liver_assessment) || 0).toLocaleString()} (${percentageHbvLiverAssessment}%)</td>
-                    <td data-label="HCV Viral Load">${(parseFloat(data.hcv_viral_load_test) || 0).toLocaleString()} (${percentageHcvViralLoadTest}%)</td>
-                    <td data-label="HCV Detect">${(parseFloat(data.hcv_detect) || 0).toLocaleString()}</td>
-                    <td data-label="HCV รักษาแล้ว">${(parseFloat(data.hcv_treated) || 0).toLocaleString()} (${percentageHcvTreated}%)</td>
-                    <td data-label="หน่วยงาน">${data.unit || ''}</td>
+                    <td data-label="HBV คัดกรอง">${(parseFloat(data.hbvScreening || 0)).toLocaleString()}</td>
+                    <td data-label="HCV คัดกรอง">${(parseFloat(data.hcvScreening || 0)).toLocaleString()}</td>
+                    <td data-label="เป้าหมาย">${(parseFloat(data.screeningTarget || 0)).toLocaleString()}</td>
+                    <td data-label="HBV เป็นบวก">${(parseFloat(data.hbvPositive || 0)).toLocaleString()}</td>
+                    <td data-label="HCV เป็นบวก">${(parseFloat(data.hcvPositive || 0)).toLocaleString()}</td>
+                    <td data-label="HBV ส่งตรวจตับ">${(parseFloat(data.hbvLiverAssessment || 0)).toLocaleString()} (${percentageHbvLiverAssessment}%)</td>
+                    <td data-label="HCV Viral Load">${(parseFloat(data.hcvViralLoadTest || 0)).toLocaleString()} (${percentageHcvViralLoadTest}%)</td>
+                    <td data-label="HCV Detect">${(parseFloat(data.hcvDetect || 0)).toLocaleString()}</td>
+                    <td data-label="HCV รักษาแล้ว">${(parseFloat(data.hcvTreated || 0)).toLocaleString()} (${percentageHcvTreated}%)</td>
+                    <td data-label="หน่วยงาน">${data.reportingUnit || ''}</td>
                 `;
                 reportTableBody.appendChild(row);
             });
         }
+
+        // Initial data load and real-time listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            listenForReports(); // Start listening for report changes
+            listenForTargets(); // Start listening for target changes
+            // updateDashboardAndTables() will be called by the onSnapshot listeners
+        });
     </script>
 </body>
 </html>
