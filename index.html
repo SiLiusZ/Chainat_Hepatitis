@@ -759,7 +759,9 @@
             ระบบรายงานผลการคัดกรองและรักษาไวรัสตับอักเสบ<br>สำนักงานสาธารณสุขจังหวัดชัยนาท
         </div>
         <div class="user-actions">
-            <!-- Removed Admin Login Link as per user request -->
+            <a href="admin_login.html">
+                <i class="fas fa-user-circle"></i> เข้าสู่ระบบสำหรับAdmin
+            </a>
             <a href="add_report.html" class="add-report">
                 <i class="fas fa-plus-circle"></i> เพิ่มข้อมูลการรายงาน
             </a>
@@ -1171,6 +1173,7 @@
 
             if (districtsToRender.length === 0) {
                 const noDataRow = document.createElement('tr');
+                // Updated colspan to 10 to match the new number of columns
                 noDataRow.innerHTML = `<td colspan="10" style="text-align: center; color: #777;">ไม่มีข้อมูลให้แสดงในตาราง</td>`;
                 tableBody.appendChild(noDataRow);
                 return;
@@ -1191,8 +1194,8 @@
                     <td data-label="HBV ตรวจความรุนแรงของตับ">${(parseFloat(districtReport.hbvLiverAssessment || 0)).toLocaleString()}</td>
                     <td data-label="HCV เป็นบวก">${(parseFloat(districtReport.hcvPositive || 0)).toLocaleString()}</td>
                     <td data-label="HCV VL+ Coreag+">${(parseFloat(districtReport.hcvViralLoadTest || 0)).toLocaleString()}</td>
-                    <td data-label="HCV Detect (ใหม่)">${(parseFloat(districtReport.hcvDetect || 0)).toLocaleString()}</td> <!-- Moved HCV Detect (ใหม่) here -->
-                    <td data-label="HCV รับยา">${(parseFloat(districtReport.hcvTreated || 0)).toLocaleString()}</td> <!-- Moved HCV รับยา here -->
+                    <td data-label="HCV Detect (ใหม่)">${(parseFloat(districtReport.hcvDetect || 0)).toLocaleString()}</td> <!-- Moved here -->
+                    <td data-label="HCV รับยา">${(parseFloat(districtReport.hcvTreated || 0)).toLocaleString()}</td> <!-- Moved here -->
                 `;
                 tableBody.appendChild(row);
             });
@@ -1393,7 +1396,7 @@
                     <td data-label="HCV คัดกรอง">${(parseFloat(data.hcvScreening || 0)).toLocaleString()}</td>
                     <td data-label="เป้าหมาย">${(parseFloat(data.screeningTarget || 0)).toLocaleString()}</td>
                     <td data-label="HBV เป็นบวก">${(parseFloat(data.hbvPositive || 0)).toLocaleString()}</td>
-                    <td data-label="HCV+ (anti-HCV)">${(parseFloat(data.hcvPositive || 0)).toLocaleString()}</td>
+                    <td data-label="HCV เป็นบวก">${(parseFloat(data.hcvPositive || 0)).toLocaleString()}</td>
                     <td data-label="HBV ส่งตรวจตับ">${(parseFloat(data.hbvLiverAssessment || 0)).toLocaleString()} (${percentageHbvLiverAssessment}%)</td>
                     <td data-label="HCV Viral Load">${(parseFloat(data.hcvViralLoadTest || 0)).toLocaleString()} (${percentageHcvViralLoadTest}%)</td>
                     <td data-label="HCV Detect">${(parseFloat(data.hcvDetect || 0)).toLocaleString()}</td>
@@ -1459,7 +1462,7 @@
                         <td data-label="HCV คัดกรอง">${(parseFloat(data.hcvScreening || 0)).toLocaleString()}</td>
                         <td data-label="เป้าหมาย">${(parseFloat(data.screeningTarget || 0)).toLocaleString()}</td>
                         <td data-label="HBV เป็นบวก">${(parseFloat(data.hbvPositive || 0)).toLocaleString()}</td>
-                        <td data-label="HCV+ (anti-HCV)">${(parseFloat(data.hcvPositive || 0)).toLocaleString()}</td>
+                        <td data-label="HCV เป็นบวก">${(parseFloat(data.hcvPositive || 0)).toLocaleString()}</td>
                         <td data-label="HBV ส่งตรวจตับ">${(parseFloat(data.hbvLiverAssessment || 0)).toLocaleString()} (${percentageHbvLiverAssessment.toFixed(2)}%)</td>
                         <td data-label="HCV Viral Load">${(parseFloat(data.hcvViralLoadTest || 0)).toLocaleString()} (${percentageHcvViralLoadTest.toFixed(2)}%)</td>
                         <td data-label="HCV Detect">${(parseFloat(data.hcvDetect || 0)).toLocaleString()}</td>
